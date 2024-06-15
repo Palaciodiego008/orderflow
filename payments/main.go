@@ -5,5 +5,6 @@ import (
 )
 
 func main() {
-	lambda.Start(ProcessPayment)
+	handler := []string{"payments", "CreatePaymentHandler"}
+	lambda.Start(handler)
 }
