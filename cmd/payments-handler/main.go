@@ -30,21 +30,21 @@ var (
 )
 
 func init() {
-	// Initialize DynamoDB table name and SQS queue URL from environment variables
 	dynamoDBTableName = os.Getenv("DYNAMODB_TABLE_NAME")
 	sqsQueueURL = os.Getenv("SQS_QUEUE_URL")
 
 	if dynamoDBTableName == "" {
-		log.Fatal("DYNAMODB_TABLE_NAME environment variable not set")
+		fmt.Println("DYNAMODB_TABLE_NAME environment variable not set")
+		dynamoDBTableName = "payments_table"
 	}
 
 	if sqsQueueURL == "" {
-		log.Fatal("SQS_QUEUE_URL environment variable not set")
+		fmt.Println("SQS_QUEUE_URL environment variable not set")
+		sqsQueueURL = "https://sqs.us-east-1.amazonaws.com/129260641130/payments_queue"
 	}
 }
 
 func processPaymentHandler(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	// Parse the request body
 	var req ProcessPaymentRequest
 	err := json.Unmarshal([]byte(request.Body), &req)
 	if err != nil {
@@ -53,29 +53,24 @@ func processPaymentHandler(ctx context.Context, request events.APIGatewayProxyRe
 
 	log.Printf("Processing payment for order ID: %s, Status: %s", req.OrderID, req.Status)
 
-	// Update payment status in DynamoDB
 	err = updatePaymentStatus(req.OrderID, req.Status)
 	if err != nil {
 		return events.APIGatewayProxyResponse{StatusCode: 500, Body: "Failed to update payment status"}, nil
 	}
 
-	// Send order completed event to Orders service via SQS
 	err = sendOrderCompletedEvent(req.OrderID)
 	if err != nil {
 		return events.APIGatewayProxyResponse{StatusCode: 500, Body: "Failed to send order completed event"}, nil
 	}
 
-	// Return success response
 	responseBody := fmt.Sprintf("Payment processed successfully for order ID: %s", req.OrderID)
 	return events.APIGatewayProxyResponse{StatusCode: 200, Body: responseBody}, nil
 }
 
 func updatePaymentStatus(orderID string, status string) error {
-	// Create a new AWS session and DynamoDB client
 	sess := session.Must(session.NewSession())
 	svc := dynamodb.New(sess)
 
-	// UpdateItem input
 	input := &dynamodb.UpdateItemInput{
 		TableName: aws.String(dynamoDBTableName),
 		Key: map[string]*dynamodb.AttributeValue{
@@ -88,21 +83,14 @@ func updatePaymentStatus(orderID string, status string) error {
 		},
 	}
 
-	// Update item in DynamoDB
 	_, err := svc.UpdateItem(input)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func sendOrderCompletedEvent(orderID string) error {
-	// Create a new AWS session and SQS client
 	sess := session.Must(session.NewSession())
 	sqsSvc := sqs.New(sess)
 
-	// Prepare event data
 	event := OrderCompletedEvent{
 		OrderID: orderID,
 	}
@@ -111,16 +99,11 @@ func sendOrderCompletedEvent(orderID string) error {
 		return err
 	}
 
-	// Send message to SQS queue
 	_, err = sqsSvc.SendMessage(&sqs.SendMessageInput{
 		MessageBody: aws.String(string(eventJSON)),
 		QueueUrl:    aws.String(sqsQueueURL),
 	})
-	if err != nil {
-		return fmt.Errorf("failed to send message to SQS: %v", err)
-	}
-
-	return nil
+	return err
 }
 
 func main() {
