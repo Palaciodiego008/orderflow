@@ -18,7 +18,7 @@ func NewMicroservicesStack(scope constructs.Construct, id string, props *Microse
 	stack := awscdk.NewStack(scope, &id, &props.StackProps)
 
 	// DynamoDB tables
-	ordersTable := awsdynamodb.NewTable(stack, jsii.String("OrdersTable"), &awsdynamodb.TableProps{
+	ordersTable := awsdynamodb.NewTable(stack, jsii.String("orders_table"), &awsdynamodb.TableProps{
 		PartitionKey: &awsdynamodb.Attribute{
 			Name: jsii.String("PK"),
 			Type: awsdynamodb.AttributeType_STRING,
@@ -30,7 +30,7 @@ func NewMicroservicesStack(scope constructs.Construct, id string, props *Microse
 		BillingMode: awsdynamodb.BillingMode_PAY_PER_REQUEST,
 	})
 
-	paymentsTable := awsdynamodb.NewTable(stack, jsii.String("PaymentsTable"), &awsdynamodb.TableProps{
+	paymentsTable := awsdynamodb.NewTable(stack, jsii.String("payments_table"), &awsdynamodb.TableProps{
 		PartitionKey: &awsdynamodb.Attribute{
 			Name: jsii.String("PK"),
 			Type: awsdynamodb.AttributeType_STRING,
