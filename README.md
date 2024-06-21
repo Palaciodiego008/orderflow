@@ -1,5 +1,3 @@
-Sure, here's a structured README for your CDK Go project:
-
 # Order-Payments CDK Go Project
 
 This project is a serverless application built with AWS CDK (Cloud Development Kit) using Go. It includes two microservices: one for processing orders and another for processing payments. These microservices communicate via SQS and use DynamoDB for data storage. The services are deployed on AWS Lambda and are triggered via API Gateway.
